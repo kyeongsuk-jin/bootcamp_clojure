@@ -1,4 +1,11 @@
-(ns aoc2018-2)
+(ns aoc2018-2
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
+
+(def str-lines (-> "aoc2018-2.input"
+                   (io/resource)
+                   (slurp)
+                   (str/split-lines)))
 
 ;; 파트 1
 ;; 주어진 각각의 문자열에서, 같은 문자가 두번 혹은 세번씩 나타난다면 각각을 한번씩 센다.
@@ -12,6 +19,36 @@
 ;; abcdee 2개의 e -> (두번 나오는 문자열 수: 4, 세번 나오는 문자열 수: 2)
 ;; ababab 3개의 a, 3개의 b 지만 한 문자열에서 같은 갯수는 한번만 카운트함 -> (두번 나오는 문자열 수: 4, 세번 나오는 문자열 수: 3)
 ;; 답 : 4 * 3 = 12
+
+(defn char-count-map [str]
+  (-> str
+      (char-array)
+      (seq)
+      (frequencies)
+      (vals)
+      (set)
+      (seq)
+      (frequencies))
+  )
+
+(defn merge-count-map [count-map-arr]
+  (reduce
+    (fn [r count-map] (merge-with + r count-map))
+    {} count-map-arr)
+  )
+
+(defn get-default-0 [map k]
+  (or (get map k) 0)
+  )
+
+(def total-char-count-map
+  (merge-count-map
+    (->> str-lines
+         (map char-count-map)))
+  )
+
+(* (get-default-0 total-char-count-map 2) (get-default-0 total-char-count-map 3))
+
 
 
 ;; 파트 2
