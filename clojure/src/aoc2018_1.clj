@@ -21,14 +21,17 @@
 (def numbers (->> str-lines
                   (map parse-long)))
 
+(defn reduce-sum [r x]
+  (+ (get r :sum) x)
+  )
+
 (defn reduce-second-same-sum [num-arr]
   (reduce
     (fn [r x]
-      (let [sum-set (get r :sum-set) sum (+ (get r :sum) x)]
+      (let [sum-set (get r :sum-set) sum (reduce-sum r x)]
         (if (sum-set sum)
           (reduced {:result sum})
-          {:sum sum :sum-set (conj sum-set sum)}
-          )
+          {:sum sum :sum-set (conj sum-set sum)})
         )
       )
     {:sum 0 :sum-set #{}}
