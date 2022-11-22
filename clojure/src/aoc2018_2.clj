@@ -20,35 +20,41 @@
 ;; ababab 3개의 a, 3개의 b 지만 한 문자열에서 같은 갯수는 한번만 카운트함 -> (두번 나오는 문자열 수: 4, 세번 나오는 문자열 수: 3)
 ;; 답 : 4 * 3 = 12
 
-(defn char-count-map [str]
-  (-> str
-      (char-array)
+(comment
+  (def input-str "abcedbb")
+
+  (-> input-str
+      (char-array)                                          ; (\a \b ...)
       (seq)
       (frequencies)
       (vals)
       (set)
-      (seq)
-      (frequencies))
+      #_(seq)
+      #_(frequencies))
   )
 
-(defn merge-count-map [count-map-arr]
-  (reduce
-    (fn [r count-map] (merge-with + r count-map))
-    {} count-map-arr)
+
+
+
+(defn char-count-set [str]
+  (-> str
+      (frequencies)
+      (vals)
+      (set)
+      )
   )
 
-(defn get-default-0 [map k]
-  (or (get map k) 0)
-  )
+(defn contains-two-three? [x]
+  (#{2 3} x))
 
-(def total-char-count-map
-  (merge-count-map
-    (->> str-lines
-         (map char-count-map)))
-  )
-
-(* (get-default-0 total-char-count-map 2) (get-default-0 total-char-count-map 3))
-
+(->> str-lines
+     (map char-count-set)
+     (apply concat)
+     (filter contains-two-three?)
+     (frequencies)  ;; 함수로 한번 만들어보자.
+     (vals)
+     (apply *)
+     )
 
 
 ;; 파트 2
@@ -63,7 +69,84 @@
 ;; wvxyz
 
 ;; 주어진 예시에서 fguij와 fghij는 같은 위치 (2번째 인덱스)에 정확히 한 문자 (u와 h)가 다름. 따라서 같은 부분인 fgij를 리턴하면 됨.
+(def part2-arr ["abcde" "fghij" "klmno" "pqrst" "fguij" "axcye" "wvxyz" "xvxyz"])
+;;["abcde" "fghij"]
+;; => [["a" "f"] ["b" "g"] ]
+;; => (map vector c1 c2)
+;
+(defn check-same-char? [source target index]
+  (= (get source index) (get target index))
+  )
+;
+(defn len-str [s t]
+  (max (count s) (count t))
+  )
+;
 
+(defn compare-str [str1 str2]
+  (reduce
+    (fn [r i]
+      ; https://clojure.org/guides/destructuring#_associative_destructuring
+      (let [source (r :source)
+            target (r :target)
+            same-str (r :same-str)
+            length (len-str source target)]
+        (if (check-same-char? source target i)
+          {:same-str (str same-str (get source i))
+           :source source
+           :target target
+           :length length
+           } ; assoc / update
+          ; (assoc r :same-str new-val)
+          ; (update r :same-str new-fn)
+           r)))
+    {:same-str "" :length 0 :source str1 :target str2}
+    (range (len-str str1 str2))))
+
+(defn compare-arr [arr str]
+  (reduce
+    (fn [r x]
+      (conj r (compare-str str x))
+      )
+    []
+    arr)
+  )
+
+(defn reduce-compare
+  "reduce compare
+  ex)
+  input) 1
+  output) 2
+  "
+  [arr index-arr]
+  (reduce
+    (fn [r x]
+      (let [target (arr x)]
+        (conj r (compare-arr (subvec arr x) target))
+        ))
+    []
+    index-arr
+    )
+  )
+
+(defn filter-one-diff?
+  [r]
+  (= (- (r :length) 1) (count (r :same-str)))
+  )
+
+; 리펙토링 전
+(->> (range 0 (- (count part2-arr) 1)) ;
+     (reduce-compare part2-arr) ;
+     (flatten) ;
+     (filter filter-one-diff?) ;
+     (map :same-str)
+     )
+
+;; PPAP
+;; parse
+;; process
+;; aggregate
+;; print
 
 ;; #################################
 ;; ###        Refactoring        ###
