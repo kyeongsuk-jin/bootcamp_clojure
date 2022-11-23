@@ -41,9 +41,9 @@
   "
   (let [match-format #"^#(\d+)\s@\s(\d+),(\d+):\s(\d+)x(\d+)"
         matched (rest (re-matches match-format str))]
-    (if (nil? matched)
-      nil
-      (zipmap [:id :start-r :start-c :inc-r :inc-c] (->> matched (mapv parse-long)))
+    (when (some? matched)
+      (zipmap [:id :start-r :start-c :inc-r :inc-c]
+              (->> matched (mapv parse-long)))
       )
     )
   )
@@ -56,7 +56,7 @@
   value -> set
 
   ex)
-  ;=> {[] #{id}}
+  ;=> {[a b] #{id}}
   "
   (let [{:keys [id start-r start-c inc-r inc-c]} parsed-input]
     (for [row (range start-r (+ start-r inc-r))
@@ -69,12 +69,18 @@
        (map parse-input)
        (mapcat init-grid)
        (apply merge-with set/union)
-       )
-  )
+       ))
 
+(defn filter-conflicted? [[k v]]
+  "{[a b] #{id}}
+  id set 이 1보다 큰 지
+  "
+  (let [c (count v)] (> c 1)))
+
+; {[a b] #{id}} -> set 사이즈가 1보다 크면 count
 (->> merged-grid
+     (filter filter-conflicted?)
      (vals)
-     (filter (fn [s] (> (count s) 1)))
      (count)
      )
 
@@ -82,9 +88,6 @@
 ;; 입력대로 모든 격자를 채우고 나면, 정확히 한 ID에 해당하는 영역이 다른 어떤 영역과도 겹치지 않음
 ;; 위의 예시에서는 ID 3 이 ID 1, 2와 겹치지 않음. 3을 출력.
 ;; 겹치지 않는 영역을 가진 ID를 출력하시오. (문제에서 답이 하나만 나옴을 보장함)
-
-(defn filter-conflicted? [[k v]]
-  (let [c (count v)] (> c 1)))
 
 (set/difference (->> merged-grid
                      (vals)
