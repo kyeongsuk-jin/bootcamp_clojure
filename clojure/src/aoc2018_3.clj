@@ -26,12 +26,12 @@
 
 ;; 여기서 XX는 ID 1, 2, 3의 영역이 두번 이상 겹치는 지역.
 ;; 겹치는 지역의 갯수를 출력하시오. (위의 예시에서는 4)
-
 (def str-lines (-> "aoc2018-3-1.input"
                    (io/resource)
                    (slurp)
                    (str/split-lines))
   )
+
 ; rematched 사용
 (defn parse-input [str]
   "입력 받은 문자열을 Map 으로 변경한다.
@@ -44,9 +44,7 @@
     (when (some? matched)
       (zipmap [:id :start-r :start-c :inc-r :inc-c]
               (->> matched (mapv parse-long)))
-      )
-    )
-  )
+      )))
 
 (defn init-grid [parsed-input]
   "값을 넣을 격자를 만든다.
@@ -65,11 +63,16 @@
       )))
 
 (def merged-grid
+  " init-grid 를 merge 한다.
+  ex)
+  {[4 3] #{1 2},
+   [2 3] #{1},
+   [2 5] #{1},
+   [3 3] #{1 2}}"
   (->> str-lines
        (map parse-input)
        (mapcat init-grid)
-       (apply merge-with set/union)
-       ))
+       (apply merge-with set/union)))
 
 (defn filter-conflicted? [[k v]]
   "{[a b] #{id}}
@@ -80,9 +83,7 @@
 ; {[a b] #{id}} -> set 사이즈가 1보다 크면 count
 (->> merged-grid
      (filter filter-conflicted?)
-     (vals)
-     (count)
-     )
+     (count))
 
 ;; 파트 2
 ;; 입력대로 모든 격자를 채우고 나면, 정확히 한 ID에 해당하는 영역이 다른 어떤 영역과도 겹치지 않음
