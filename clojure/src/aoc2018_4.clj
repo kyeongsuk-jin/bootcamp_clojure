@@ -49,15 +49,17 @@
     (.setTimeZone date-format (SimpleTimeZone. 0 "UTC"))
     (.parse date-format str)))
 
-(defn get-guard-id [str]
+(defn get-guard-id
   "
   guard-id 정보를 가져온다.
 
   number or nil
   "
+  [str]
   (let [pattern #"Guard #(\d+) begins shift"
         [_ matched] (re-matches pattern str)]
     (when (some? matched) (parse-long matched))))
+
 
 (defn reduce-parse-guard-history
   "parse 후에 바로 reduce 로 {id [total-minute range-frequencies]}"
@@ -103,30 +105,42 @@
     )
   )
 
+(defn convert-guard-slept-map
+  "vector 를 map 으로 변경한다.
+
+  ex) [1 ([2 4][15 20])]
+  => "
+  [v]
+  (let [[guard-id slept-ranges] v
+        total-slept (get-total-slept slept-ranges)
+        minute-count (get-minute-count-map slept-ranges)]
+    {:guard-id guard-id
+     :total-slept total-slept
+     :minute-count minute-count}
+    )
+  )
+
 (def guard-slept-map
   "map 을 만든다.
 
-  {:guard-id :total-slept :frequencies}
   ex)
-  ; => {99 ([45 55] [36 46] [40 50]), 10 ([24 29] [30 55] [5 25])}
+  ; => {:guard-id 10 :total-slept 50 :minute-count {7 1 20 1}
   "
   (->> str-lines
        (reduce-parse-guard-history)
-       (map
-         (fn [x]
-           (let [[guard-id slept-ranges] x
-                 total-slept (get-total-slept slept-ranges)
-                 minute-count (get-minute-count-map slept-ranges)]
-             {:guard-id guard-id :total-slept total-slept :minute-count minute-count}
-             )))))
+       (map convert-guard-slept-map)))
 
+guard-slept-map
 
 ;===============================================================
 ; 주어진 입력에 대해서, 가장 오랜시간 잠들어있었던 가드의 ID와,
 ; 그 가드가 가장 빈번하게 잠들어 있었던 분(minute)의 곱을 구하라
 (def get-max-slept-guard
   (last (sort-by :total-slept guard-slept-map)))
-(defn get-max-minute [guard]
+
+(defn get-most-frequency-minute
+  "guard 가 비번하게 잠들어 있었던 분"
+  [guard]
   (let [{:keys[minute-count]} guard]
     (->> minute-count
          (sort-by val)
@@ -135,25 +149,26 @@
     ))
 
 (->> get-max-slept-guard
-     ((juxt :guard-id get-max-minute))
+     ((juxt :guard-id get-most-frequency-minute))
      (apply *))
 
 ;=======================================================================
-;; 주어진 분(minute)에 가장 많이 잠들어 있던 가드의 ID과 그 분(minute)을 곱한 값을 구하라.
-guard-slept-map
-(defn part2
-  [m minute]
-  (* minute (->> m
-       (reduce
-         (fn [r x]
-           (let [[_ max-count] r
-                 {:keys [guard-id minute-count]} x
-                 count (minute-count minute 0)]
-             (if (> count max-count)
-               [guard-id count]
-               r
-               )
-             )) [0 0])
-       (first)))
+;; 주어진 분(minute)에 가장 많이 잠들어 있던 가드의 ID과
+;; 그 분(minute)을 곱한 값을 구하라.
+(defn reduce-most-slept-guard [minute m]
+  (first (reduce (fn [r x]
+    (let [[_ max-count] r
+          {:keys [guard-id minute-count]} x
+          count (minute-count minute 0)]
+      (if (> count max-count)
+        [guard-id count]
+        r
+        )
+      )) [0 0] m))
   )
-(part2 guard-slept-map 45)
+
+(defn part2
+  [minute]
+(* minute (reduce-most-slept-guard minute guard-slept-map)))
+
+(part2 24)
