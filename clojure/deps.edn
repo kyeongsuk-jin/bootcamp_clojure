@@ -1,3 +1,5 @@
 {:paths
- ["src", "resources"]
- :deps {}}
+ ["src", "resources" "classes"]
+ :deps {clojure.java-time/clojure.java-time {:mvn/version "1.0.0"}
+        org.flatland/ordered                {:mvn/version "1.15.10"}
+        }}
