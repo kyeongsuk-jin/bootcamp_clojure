@@ -1,7 +1,6 @@
 (ns aoc2018_3
-  (:require [clojure.java.io :as io]
-            [clojure.set :as set]
-            [clojure.string :as str]))
+  (:require [clojure.set :as set]
+            [aoc2018 :as aoc]))
 
 
 ;; 파트 1
@@ -26,11 +25,6 @@
 
 ;; 여기서 XX는 ID 1, 2, 3의 영역이 두번 이상 겹치는 지역.
 ;; 겹치는 지역의 갯수를 출력하시오. (위의 예시에서는 4)
-(def str-lines (-> "aoc2018-3-1.input"
-                   (io/resource)
-                   (slurp)
-                   (str/split-lines))
-  )
 
 ; rematched 사용
 (defn parse-input [str]
@@ -69,7 +63,7 @@
    [2 3] #{1},
    [2 5] #{1},
    [3 3] #{1 2}}"
-  (->> str-lines
+  (->> (aoc/read-file "aoc2018-3-1.input")
        (map parse-input)
        (mapcat init-grid)
        (apply merge-with set/union)))

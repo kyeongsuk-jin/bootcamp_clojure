@@ -1,11 +1,5 @@
 (ns aoc2018-2
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
-
-(def str-lines (-> "aoc2018-2.input"
-                   (io/resource)
-                   (slurp)
-                   (str/split-lines)))
+  (:require [aoc2018 :as aoc]))
 
 ;; 파트 1
 ;; 주어진 각각의 문자열에서, 같은 문자가 두번 혹은 세번씩 나타난다면 각각을 한번씩 센다.
@@ -20,41 +14,17 @@
 ;; ababab 3개의 a, 3개의 b 지만 한 문자열에서 같은 갯수는 한번만 카운트함 -> (두번 나오는 문자열 수: 4, 세번 나오는 문자열 수: 3)
 ;; 답 : 4 * 3 = 12
 
-(comment
-  (def input-str "abcedbb")
+(defn get-val-2 [m] (m 2 0))
 
-  (-> input-str
-      (char-array)                                          ; (\a \b ...)
-      (seq)
-      (frequencies)
-      (vals)
-      (set)
-      #_(seq)
-      #_(frequencies))
-  )
+(defn get-val-3 [m] (m 3 0))
 
-
-
-
-(defn char-count-set [str]
-  (-> str
-      (frequencies)
-      (vals)
-      (set)
-      )
-  )
-
-(defn contains-two-three? [x]
-  (#{2 3} x))
-
-(->> str-lines
-     (map char-count-set)
-     (apply concat)
-     (filter contains-two-three?)
-     (frequencies)  ;; 함수로 한번 만들어보자.
-     (vals)
-     (apply *)
-     )
+(->> (aoc/read-file "aoc2018-2.input")
+     (map frequencies)
+     (map vals)
+     (mapcat set)
+     (frequencies)
+     ((juxt get-val-2 get-val-3))
+     (apply *))
 
 
 ;; 파트 2
@@ -69,78 +39,37 @@
 ;; wvxyz
 
 ;; 주어진 예시에서 fguij와 fghij는 같은 위치 (2번째 인덱스)에 정확히 한 문자 (u와 h)가 다름. 따라서 같은 부분인 fgij를 리턴하면 됨.
-(def part2-arr ["abcde" "fghij" "klmno" "pqrst" "fguij" "axcye" "wvxyz" "xvxyz"])
+(def part2-arr (aoc/read-file "aoc2018-2-2.input"))
 ;;["abcde" "fghij"]
 ;; => [["a" "f"] ["b" "g"] ]
 ;; => (map vector c1 c2)
-;
-(defn check-same-char? [source target index]
-  (= (get source index) (get target index))
-  )
-;
-(defn len-str [s t]
-  (max (count s) (count t))
-  )
+;; https://clojure.org/guides/destructuring#_associative_destructuring
 ;
 
-(defn compare-str [str1 str2]
-  (reduce
-    (fn [r i]
-      ; https://clojure.org/guides/destructuring#_associative_destructuring
-      (let [source (r :source)
-            target (r :target)
-            same-str (r :same-str)
-            length (len-str source target)]
-        (if (check-same-char? source target i)
-          {:same-str (str same-str (get source i))
-           :source source
-           :target target
-           :length length
-           } ; assoc / update
-          ; (assoc r :same-str new-val)
-          ; (update r :same-str new-fn)
-           r)))
-    {:same-str "" :length 0 :source str1 :target str2}
-    (range (len-str str1 str2))))
+(defn get-same-str [str1 str2]
+    (->> (map vector str1 str2)
+         (filter (fn [[ch1 ch2]] (= ch1 ch2)))
+         (map first)
+         (apply str)))
 
-(defn compare-arr [arr str]
-  (reduce
-    (fn [r x]
-      (conj r (compare-str str x))
-      )
-    []
-    arr)
-  )
+(defn create-map [arr]
+  (for [x (range (dec (count arr)))
+        str1 (subvec arr (inc x))]
+    (let [str2 (part2-arr x)]
+    {:str1 str1 :str2 str2 :same-str (get-same-str str1 str2)})))
 
-(defn reduce-compare
-  "reduce compare
-  ex)
-  input) 1
-  output) 2
-  "
-  [arr index-arr]
-  (reduce
-    (fn [r x]
-      (let [target (arr x)]
-        (conj r (compare-arr (subvec arr x) target))
-        ))
-    []
-    index-arr
-    )
-  )
+(defn get-min-length [str1 str2]
+  (min (count str1) (count str2)))
 
-(defn filter-one-diff?
-  [r]
-  (= (- (r :length) 1) (count (r :same-str)))
-  )
 
-; 리펙토링 전
-(->> (range 0 (- (count part2-arr) 1)) ;
-     (reduce-compare part2-arr) ;
-     (flatten) ;
-     (filter filter-one-diff?) ;
-     (map :same-str)
-     )
+(defn check-one-char-diff? [m]
+  (let [{:keys [str1 str2 same-str]} m
+        required-length (dec (get-min-length str1 str2))]
+    (= (count same-str) required-length)))
+
+(->> (create-map part2-arr)
+     (filter check-one-char-diff?)
+     (map :same-str))
 
 ;; PPAP
 ;; parse

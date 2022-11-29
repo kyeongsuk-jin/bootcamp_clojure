@@ -1,9 +1,5 @@
 (ns aoc2018_4
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.spec.alpha :as s]
-            [java-time :as jt]
-            [aoc2018 :as aoc])
+  (:require [aoc2018 :as aoc])
   (:import (java.text SimpleDateFormat)
            (java.util SimpleTimeZone)))
 ;; 파트 1
@@ -60,6 +56,22 @@
         [_ matched] (re-matches pattern str)]
     (when (some? matched) (parse-long matched))))
 
+(defn merge-guard-history
+  "조건에 따라서 guard-history map 을 머지한다.
+  keys [ :shift-guard :sleep-minute :histories ]
+  "
+  [m time action]
+  (let [{:keys [shift-guard sleep-minute histories]} m
+        minute (.getMinutes time)
+        guard-id (get-guard-id action)]
+    (if (some? guard-id)
+      (merge m {:shift-guard guard-id})
+        (case [action]
+          ["falls asleep"] (merge m {:sleep-minute minute})
+          ["wakes up"]
+          (let [new-m {shift-guard [[sleep-minute minute]]}]
+            (merge m {:histories (merge-with concat new-m histories)}))
+          m))))
 
 (defn reduce-parse-guard-history
   "parse 후에 바로 reduce 로 {id [total-minute range-frequencies]}"
@@ -68,18 +80,8 @@
         (fn [r str]
           (let [pattern #"\[(.*)\]\s(.*)"
                 [_ time-str action-str] (re-matches pattern str)
-                guard-id (get-guard-id action-str)]
-            (if (some? guard-id)
-              (assoc r :shift-guard guard-id)
-              (let [time (to-date time-str)
-                    minute (.getMinutes time)]
-              (case [action-str]
-                ["falls asleep"] (assoc r :sleep-minute minute)
-                ["wakes up"]
-                (let [{:keys [shift-guard sleep-minute histories]} r
-                      m {shift-guard [[sleep-minute minute]]}]
-                (assoc r :histories (merge-with concat m histories)))
-                r)))))
+                time (to-date time-str)]
+            (merge-guard-history r time action-str)))
         {:shift-guard nil :sleep-minute nil :histories {}}
         guard-histories)
       (:histories))
@@ -109,7 +111,7 @@
   "vector 를 map 으로 변경한다.
 
   ex) [1 ([2 4][15 20])]
-  => "
+  => {:guard-id 10 :total-slept 50 :minute-count {7 1 20 1}"
   [v]
   (let [[guard-id slept-ranges] v
         total-slept (get-total-slept slept-ranges)
@@ -129,8 +131,6 @@
   (->> str-lines
        (reduce-parse-guard-history)
        (map convert-guard-slept-map)))
-
-guard-slept-map
 
 ;===============================================================
 ; 주어진 입력에 대해서, 가장 오랜시간 잠들어있었던 가드의 ID와,
