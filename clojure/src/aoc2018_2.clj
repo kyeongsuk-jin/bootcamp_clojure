@@ -46,21 +46,22 @@
 ;; https://clojure.org/guides/destructuring#_associative_destructuring
 ;
 
-(defn get-same-str [str1 str2]
-    (->> (map vector str1 str2)
-         (filter (fn [[ch1 ch2]] (= ch1 ch2)))
-         (map first)
-         (apply str)))
+(defn get-same-str
+  [str1 str2]
+  (->> (map vector str1 str2)
+       (filter (fn [[ch1 ch2]] (= ch1 ch2)))
+       (map first)
+       (apply str)))
 
-(defn create-map [arr]
+(defn create-map
+  [arr]
   (for [x (range (dec (count arr)))
         str1 (subvec arr (inc x))]
-    (let [str2 (part2-arr x)]
-    {:str1 str1 :str2 str2 :same-str (get-same-str str1 str2)})))
+    (let [str2 (arr x)]
+      {:str1 str1 :str2 str2 :same-str (get-same-str str1 str2)})))
 
 (defn get-min-length [str1 str2]
   (min (count str1) (count str2)))
-
 
 (defn check-one-char-diff? [m]
   (let [{:keys [str1 str2 same-str]} m
@@ -69,7 +70,8 @@
 
 (->> (create-map part2-arr)
      (filter check-one-char-diff?)
-     (map :same-str))
+     (map :same-str)
+     (first))
 
 ;; PPAP
 ;; parse
