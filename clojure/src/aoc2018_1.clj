@@ -15,16 +15,16 @@
 ;; 처음으로 두번 나오는 숫자를 리턴하시오.
 ;; 예) +3, +3, +4, -2, -4 는 10이 처음으로 두번 나오는 숫자임.
 ;; 0 -> 3 (+3) -> 6 (+3) -> 10(+4) -> 8(-2) -> 4(-4) -> 7(+3) -> 10(+3) -> ...
-(defn find-second-same-sum [num-arr]
-  (reduce (fn [r x]
-            (let [{:keys [sum-set last-sum]} r
-                          sum (+ x last-sum)]
-                      (if (sum-set sum)
-                        (reduced {:result sum})
-                        {:last-sum sum :sum-set (conj sum-set sum)}))
-            )
-          {:last-sum 0 :sum-set #{}} num-arr))
+(defn find-second-same-sum
+  [num-arr]
+  (reduce
+    (fn [sum-set sum]
+      (if (sum-set sum)
+        (reduced sum)
+        (conj sum-set sum)))
+    #{} num-arr))
 
 (->> (aoc/read-file "aoc2018-1.input")
      (map parse-long)
-     find-second-same-sum :result)
+     (reductions +)
+     find-second-same-sum)
