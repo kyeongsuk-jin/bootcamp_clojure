@@ -66,36 +66,34 @@
         guard-id (get-guard-id action)]
     (if (some? guard-id)
       (merge m {:shift-guard guard-id})
-        (case [action]
-          ["falls asleep"] (merge m {:sleep-minute minute})
-          ["wakes up"]
-          (let [new-m {shift-guard [[sleep-minute minute]]}]
-            (merge m {:histories (merge-with concat new-m histories)}))
-          m))))
+      (case [action]
+        ["falls asleep"] (merge m {:sleep-minute minute})
+        ["wakes up"]
+        (let [new-m {shift-guard [[sleep-minute minute]]}]
+          (merge m {:histories (merge-with concat new-m histories)}))
+        m))))
 
 (defn reduce-parse-guard-history
   "parse 후에 바로 reduce 로 {id [total-minute range-frequencies]}"
   [guard-histories]
   (-> (reduce
-        (fn [r str]
+        (fn [r s]
           (let [pattern #"\[(.*)\]\s(.*)"
-                [_ time-str action-str] (re-matches pattern str)
+                [_ time-str action-str] (re-matches pattern s)
                 time (to-date time-str)]
             (merge-guard-history r time action-str)))
         {:shift-guard nil :sleep-minute nil :histories {}}
         guard-histories)
-      (:histories))
-  )
+      (:histories)))
+
 
 (defn get-total-slept
   "총 잠든 시간을 구한다."
   [slept-range]
-  (->> slept-range
-       (reduce
-         (fn [r x]
-           (let [[start end] x]
-             (+ r (- end start))))
-         0)))
+  (reduce
+    (fn [r [start end]]
+      (+ r (- end start)))
+    0 slept-range))
 
 (defn get-minute-count-map
   "minute frequencies map"
@@ -103,9 +101,8 @@
   (->>
     slept-ranges
     (mapcat (fn [x] (let [[start end] x] (range start end))))
-    (frequencies)
-    )
-  )
+    (frequencies)))
+
 
 (defn convert-guard-slept-map
   "vector 를 map 으로 변경한다.
@@ -116,11 +113,11 @@
   (let [[guard-id slept-ranges] v
         total-slept (get-total-slept slept-ranges)
         minute-count (get-minute-count-map slept-ranges)]
-    {:guard-id guard-id
-     :total-slept total-slept
-     :minute-count minute-count}
-    )
-  )
+    {:guard-id     guard-id
+     :total-slept  total-slept
+     :minute-count minute-count}))
+
+
 
 (def guard-slept-map
   "map 을 만든다.
@@ -141,12 +138,12 @@
 (defn get-most-frequency-minute
   "guard 가 비번하게 잠들어 있었던 분"
   [guard]
-  (let [{:keys[minute-count]} guard]
+  (let [{:keys [minute-count]} guard]
     (->> minute-count
          (sort-by val)
-         last key
-         )
-    ))
+         last key)))
+
+
 
 (->> get-max-slept-guard
      ((juxt :guard-id get-most-frequency-minute))
@@ -156,19 +153,18 @@
 ;; 주어진 분(minute)에 가장 많이 잠들어 있던 가드의 ID과
 ;; 그 분(minute)을 곱한 값을 구하라.
 (defn reduce-most-slept-guard [minute m]
-  (first (reduce (fn [r x]
-    (let [[_ max-count] r
-          {:keys [guard-id minute-count]} x
-          count (minute-count minute 0)]
-      (if (> count max-count)
-        [guard-id count]
-        r
-        )
-      )) [0 0] m))
-  )
+  (first
+    (reduce
+      (fn [r x]
+        (let [[_ max-count] r
+              {:keys [guard-id minute-count]} x
+              count (minute-count minute 0)]
+          (if (> count max-count)
+            [guard-id count]
+            r))) [0 0] m)))
 
 (defn part2
   [minute]
-(* minute (reduce-most-slept-guard minute guard-slept-map)))
+  (* minute (reduce-most-slept-guard minute guard-slept-map)))
 
-(part2 24)
+(part2 45)
