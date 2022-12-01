@@ -1,6 +1,6 @@
 (ns aoc2018_3
-  (:require [clojure.set :as set]
-            [aoc2018 :as aoc]))
+  (:require [aoc2018 :as aoc]
+            [clojure.set :as set]))
 
 
 ;; 파트 1
@@ -25,36 +25,36 @@
 
 ;; 여기서 XX는 ID 1, 2, 3의 영역이 두번 이상 겹치는 지역.
 ;; 겹치는 지역의 갯수를 출력하시오. (위의 예시에서는 4)
-
 ; rematched 사용
-(defn parse-input [str]
+(defn parse-input
   "입력 받은 문자열을 Map 으로 변경한다.
 
   ex) (parse-grid-input \"#1 @ 1,3: 4x4\")
   ;=> {:id 1, :start-r 1, :start-c 3, :inc-r 4, :inc-c 4}
+
   "
+  [str]
   (let [match-format #"^#(\d+)\s@\s(\d+),(\d+):\s(\d+)x(\d+)"
-        matched (rest (re-matches match-format str))]
-    (when (some? matched)
-      (zipmap [:id :start-r :start-c :inc-r :inc-c]
-              (->> matched (mapv parse-long)))
-      )))
+        matched (re-matches match-format str)]
+    (if (some? matched)
+      (zipmap [:id :start-r :start-c :inc-r :inc-c] (->> (rest matched) (mapv parse-long)))
+      {:id 0 :start-r 0 :start-c 0 :inc-r 0 :inc-c 0})))
 
-(defn init-grid [parsed-input]
+(defn init-grid
   "값을 넣을 격자를 만든다.
-  parsed-input -> {:id :start-r :start-c :inc-r :inc-c}
+ parsed-input -> {:id :start-r :start-c :inc-r :inc-c}
 
-  key -> vector
-  value -> set
+ key -> vector
+ value -> set
 
-  ex)
-  ;=> {[a b] #{id}}
-  "
+ ex)
+ ;=> {[a b] #{id}}
+ "
+  [parsed-input]
   (let [{:keys [id start-r start-c inc-r inc-c]} parsed-input]
     (for [row (range start-r (+ start-r inc-r))
           col (range start-c (+ start-c inc-c))]
-      {[row col] #{id}}
-      )))
+      {[row col] #{id}})))
 
 (def merged-grid
   " init-grid 를 merge 한다.
@@ -68,10 +68,11 @@
        (mapcat init-grid)
        (apply merge-with set/union)))
 
-(defn filter-conflicted? [[k v]]
+(defn filter-conflicted?
   "{[a b] #{id}}
   id set 이 1보다 큰 지
   "
+  [[_ v]]
   (let [c (count v)] (> c 1)))
 
 ; {[a b] #{id}} -> set 사이즈가 1보다 크면 count
