@@ -41,8 +41,9 @@
   "시간 문자열을 date 형태로 변경한다.
   "
   (let [time-pattern "yyyy-MM-dd hh:mm"
-        date-format (SimpleDateFormat. time-pattern)]
-    (.setTimeZone date-format (SimpleTimeZone. 0 "UTC"))
+        date-format (doto
+                      (SimpleDateFormat. time-pattern)
+                      (.setTimeZone (SimpleTimeZone. 0 "UTC")))]
     (.parse date-format str)))
 
 (defn get-guard-id
@@ -65,12 +66,12 @@
         minute (.getMinutes time)
         guard-id (get-guard-id action)]
     (if (some? guard-id)
-      (merge m {:shift-guard guard-id})
+      (assoc m :shift-guard guard-id)
       (case [action]
-        ["falls asleep"] (merge m {:sleep-minute minute})
+        ["falls asleep"] (assoc m :sleep-minute minute)
         ["wakes up"]
         (let [new-m {shift-guard [[sleep-minute minute]]}]
-          (merge m {:histories (merge-with concat new-m histories)}))
+          (assoc m :histories (merge-with concat new-m histories)))
         m))))
 
 (defn reduce-parse-guard-history
@@ -142,8 +143,6 @@
     (->> minute-count
          (sort-by val)
          last key)))
-
-
 
 (->> get-max-slept-guard
      ((juxt :guard-id get-most-frequency-minute))
