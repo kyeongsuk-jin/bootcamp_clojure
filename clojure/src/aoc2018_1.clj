@@ -22,9 +22,10 @@
       (if (sum-set sum)
         (reduced sum)
         (conj sum-set sum)))
-    #{} num-arr))
-
+    #{0} num-arr))
+;;+7, +7, -2, -7, -4
 (->> (aoc/read-file "aoc2018-1.input")
      (map parse-long)
+     (cycle)
      (reductions +)
      find-second-same-sum)

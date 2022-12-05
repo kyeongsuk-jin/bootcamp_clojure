@@ -1,5 +1,7 @@
 (ns aoc2018_5
-  (:require [clojure.string :as string]))
+  (:require
+    [aoc2018 :as aoc]
+    [clojure.string :as string]))
 ;; 파트 1
 ;; 입력: dabAcCaCBAcCcaDA
 
@@ -11,8 +13,7 @@
 
 ;; 주어진 input 에서 최종으로 남는 문자열을 리턴하시오.
 
-(def input "dabAcCaCBAcCcaDA")
-
+(def input (first (aoc/read-file "aoc2018-5.input")))
 
 ;; 파트 2
 ;; 주어진 문자열에서 한 유닛 (대문자와 소문자)을 전부 없앤 후 반응시켰을 때, 가장 짧은 문자열의 길이를 리턴하시오.
@@ -39,7 +40,8 @@
 
 (->> (merge-stack input)
      (map str)
-     string/join)
+     string/join
+     count)
 
 ;;========= stack : PART 2 =========;;
 (defn merge-removed-alphabet

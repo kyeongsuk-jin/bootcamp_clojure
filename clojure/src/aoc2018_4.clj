@@ -126,7 +126,7 @@
   ex)
   ; => {:guard-id 10 :total-slept 50 :minute-count {7 1 20 1}
   "
-  (->> str-lines
+  (->> (sort str-lines)
        (reduce-parse-guard-history)
        (map convert-guard-slept-map)))
 
@@ -143,6 +143,8 @@
     (->> minute-count
          (sort-by val)
          last key)))
+
+(get-most-frequency-minute get-max-slept-guard)
 
 (->> get-max-slept-guard
      ((juxt :guard-id get-most-frequency-minute))
@@ -162,8 +164,16 @@
             [guard-id count]
             r))) [0 0] m)))
 
-(defn part2
-  [minute]
-  (* minute (reduce-most-slept-guard minute guard-slept-map)))
+(defn get-guard-most-frequency
+  "guard 가 비번하게 잠들었던 정보"
+  [guard]
+  (let [{:keys [guard-id minute-count]} guard
+        [m c] (->> minute-count (sort-by val) last)]
+    {:guard-id guard-id :minute m :count c}))
+(def most-slept-guard (->> guard-slept-map
+                           (map get-guard-most-frequency)
+                           (sort-by :count)
+                           last))
 
-(part2 45)
+(->> ((juxt :guard-id :minute) most-slept-guard)
+     (apply *))
