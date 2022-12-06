@@ -1,4 +1,5 @@
-(ns aoc2018-2)
+(ns aoc2018-2
+  (:require [aoc2018 :as aoc]))
 
 ;; 파트 1
 ;; 주어진 각각의 문자열에서, 같은 문자가 두번 혹은 세번씩 나타난다면 각각을 한번씩 센다.
@@ -13,6 +14,18 @@
 ;; ababab 3개의 a, 3개의 b 지만 한 문자열에서 같은 갯수는 한번만 카운트함 -> (두번 나오는 문자열 수: 4, 세번 나오는 문자열 수: 3)
 ;; 답 : 4 * 3 = 12
 
+(defn get-val-2 [m] (m 2 0))
+
+(defn get-val-3 [m] (m 3 0))
+
+(->> (aoc/read-file "aoc2018-2.input")
+     (map frequencies)
+     (map vals)
+     (mapcat set)
+     (frequencies)
+     ((juxt get-val-2 get-val-3))
+     (apply *))
+
 
 ;; 파트 2
 ;; 여러개의 문자열 중, 같은 위치에 정확히 하나의 문자가 다른 문자열 쌍에서 같은 부분만을 리턴하시오.
@@ -26,7 +39,45 @@
 ;; wvxyz
 
 ;; 주어진 예시에서 fguij와 fghij는 같은 위치 (2번째 인덱스)에 정확히 한 문자 (u와 h)가 다름. 따라서 같은 부분인 fgij를 리턴하면 됨.
+(def part2-arr (aoc/read-file "aoc2018-2-2.input"))
+;;["abcde" "fghij"]
+;; => [["a" "f"] ["b" "g"] ]
+;; => (map vector c1 c2)
+;; https://clojure.org/guides/destructuring#_associative_destructuring
+;
 
+(defn get-same-str
+  [str1 str2]
+  (->> (map vector str1 str2)
+       (filter (fn [[ch1 ch2]] (= ch1 ch2)))
+       (map first)
+       (apply str)))
+
+(defn create-map
+  [arr]
+  (for [x (range (dec (count arr)))
+        str1 (subvec arr (inc x))]
+    (let [str2 (arr x)]
+      {:str1 str1 :str2 str2 :same-str (get-same-str str1 str2)})))
+
+(defn get-min-length [str1 str2]
+  (min (count str1) (count str2)))
+
+(defn check-one-char-diff? [m]
+  (let [{:keys [str1 str2 same-str]} m
+        required-length (dec (get-min-length str1 str2))]
+    (= (count same-str) required-length)))
+
+(->> (create-map part2-arr)
+     (filter check-one-char-diff?)
+     (map :same-str)
+     (first))
+
+;; PPAP
+;; parse
+;; process
+;; aggregate
+;; print
 
 ;; #################################
 ;; ###        Refactoring        ###
